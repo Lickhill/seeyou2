@@ -107,7 +107,7 @@ const Info = () => {
 
 			// Add photo if selected
 			if (photo) {
-				formDataObj.append("photo", photo);
+				formDataObj.append("photo", formData.photo);
 			}
 
 			// Determine URL and method based on update status

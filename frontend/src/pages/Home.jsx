@@ -56,8 +56,7 @@ const Home = () => {
 				</div>
 
 				<h1 className="text-5xl font-bold text-purple-900 mb-6">
-					Find Your Campus{" "}
-					<span className="text-purple-600">Match</span>
+					CU now has See <span className="text-purple-600">You</span>
 				</h1>
 
 				<p className="text-lg text-purple-800/90 mb-8 max-w-2xl mx-auto">

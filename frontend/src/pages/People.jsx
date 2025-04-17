@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { FaHeart, FaTimes } from "react-icons/fa"; // Import icons
+import { FaHeart, FaTimes } from "react-icons/fa";
 
 const People = () => {
 	const { user } = useUser();
 	const navigate = useNavigate();
 	const [users, setUsers] = useState([]);
 	const [loading, setLoading] = useState(true);
-	const [actionLoading, setActionLoading] = useState(null); // Track which user action is loading
+	const [actionLoading, setActionLoading] = useState(null);
+	const [imageErrors, setImageErrors] = useState({});
 
 	useEffect(() => {
 		const fetchUsers = async () => {
@@ -18,20 +19,11 @@ const People = () => {
 				const response = await fetch("http://localhost:5000/api/users");
 				if (response.ok) {
 					const data = await response.json();
-
-					// Filter out the current user based on clerkId
 					const filteredUsers = data.filter(
-						(u) => u.clerkId !== user.id // Ensure we exclude the current user
+						(u) => u.clerkId !== user.id
 					);
-
 					setUsers(filteredUsers);
-
-					// Log each user's name and photo URL to the console
-					filteredUsers.forEach((u) => {
-						console.log(
-							`User: ${u.firstName}, Photo URL: ${u.photoUrl}`
-						);
-					});
+					console.log("Fetched users:", filteredUsers);
 				} else {
 					console.error("Failed to fetch users");
 				}
@@ -49,13 +41,10 @@ const People = () => {
 
 	const handleUpdateProfile = async () => {
 		if (!user) return;
-
 		try {
 			await fetch(
 				`http://localhost:5000/api/users/clerk/${user.id}/needs-update`,
-				{
-					method: "PATCH",
-				}
+				{ method: "PATCH" }
 			);
 			navigate("/info");
 		} catch (error) {
@@ -66,15 +55,11 @@ const People = () => {
 	const handleLike = async (targetUserId) => {
 		if (!user) return;
 		setActionLoading(targetUserId + "_like");
-
 		try {
 			const response = await fetch(
 				`http://localhost:5000/api/users/clerk/${user.id}/like/${targetUserId}`,
-				{
-					method: "POST",
-				}
+				{ method: "POST" }
 			);
-
 			if (response.ok) {
 				const data = await response.json();
 				if (data.match) {
@@ -93,13 +78,10 @@ const People = () => {
 	const handleDislike = async (targetUserId) => {
 		if (!user) return;
 		setActionLoading(targetUserId + "_dislike");
-
 		try {
 			await fetch(
 				`http://localhost:5000/api/users/clerk/${user.id}/dislike/${targetUserId}`,
-				{
-					method: "POST",
-				}
+				{ method: "POST" }
 			);
 		} catch (error) {
 			console.error("Dislike action failed:", error);
@@ -108,12 +90,18 @@ const People = () => {
 		}
 	};
 
-	// Simple placeholder component for missing images
-	const ImagePlaceholder = () => (
-		<div className="w-full h-48 bg-purple-100 flex items-center justify-center">
-			<span className="text-purple-300 text-lg">No photo available</span>
-		</div>
-	);
+	const ImagePlaceholder = ({ firstName, lastName }) => {
+		const initials = `${firstName?.charAt(0) || ""}${
+			lastName?.charAt(0) || ""
+		}`;
+		return (
+			<div className="w-full h-48 bg-purple-100 flex items-center justify-center">
+				<span className="text-purple-600 text-2xl font-bold">
+					{initials || "?"}
+				</span>
+			</div>
+		);
+	};
 
 	if (!user) {
 		return (
@@ -153,29 +141,28 @@ const People = () => {
 							key={userData._id}
 							className="bg-white shadow-sm rounded-xl overflow-hidden relative transition-transform hover:scale-105 hover:shadow-md border border-purple-100"
 						>
-							{/* Profile Image */}
 							<div className="w-full h-56 bg-purple-100 relative">
-								{userData.photoUrl ? (
+								{userData.photoUrl &&
+								!imageErrors[userData._id] ? (
 									<img
 										src={userData.photoUrl}
 										alt={`${userData.firstName}'s profile`}
 										className="w-full h-full object-cover"
-										onError={(e) => {
-											e.currentTarget.style.display =
-												"none";
-											e.currentTarget.parentNode.innerHTML = `
-                        <div class="w-full h-full bg-purple-100 flex items-center justify-center">
-                          <span class="text-purple-300">No photo available</span>
-                        </div>
-                      `;
-										}}
+										onError={() =>
+											setImageErrors((prev) => ({
+												...prev,
+												[userData._id]: true,
+											}))
+										}
 									/>
 								) : (
-									<ImagePlaceholder />
+									<ImagePlaceholder
+										firstName={userData.firstName}
+										lastName={userData.lastName}
+									/>
 								)}
 							</div>
 
-							{/* Profile Info */}
 							<div className="p-4 text-center">
 								<h3 className="text-xl font-semibold text-purple-900 mb-1">
 									{userData.firstName}
@@ -187,7 +174,6 @@ const People = () => {
 								)}
 							</div>
 
-							{/* Action Buttons */}
 							<div className="flex justify-center space-x-4 p-4 border-t border-purple-50">
 								<button
 									className={`p-3 rounded-full transition-all ${

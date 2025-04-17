@@ -49,7 +49,7 @@ const Header = () => {
 							clipRule="evenodd"
 						/>
 					</svg>
-					Campus Connect
+					SeeYou
 				</Link>
 
 				<nav className="flex items-center space-x-6">
